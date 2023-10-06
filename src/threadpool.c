@@ -3,33 +3,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
+void * thread_job_func(void *arg);
 void add_work(ThreadPool *thread_pool, ThreadTask thread_task);
 
-ThreadPool thread_pool_constructor(int num_threads, void * (thread_job_func))
+ThreadPool *thread_pool_constructor(int num_threads)
 {
-    ThreadPool thread_pool;
-    thread_pool.num_threads = num_threads;
-    thread_pool.active = ACTIVE;
-    thread_pool.work = queue_constructor();
+    ThreadPool *thread_pool = malloc(sizeof(ThreadPool));
+    thread_pool->num_threads = num_threads;
+    thread_pool->active = ACTIVE;
+    thread_pool->work = queue_constructor();
 
-    pthread_mutex_init(&thread_pool.lock, NULL);
-    pthread_cond_init(&thread_pool.signal, NULL);
+    pthread_mutex_init(&thread_pool->lock, NULL);
+    pthread_cond_init(&thread_pool->signal, NULL);
 
-    pthread_mutex_lock(&thread_pool.lock);
-    thread_pool.pool = malloc(sizeof(pthread_t[num_threads]));
+    // pthread_mutex_lock(&thread_pool->lock);
+    thread_pool->pool = malloc(sizeof(pthread_t[num_threads]));
 
     // Creo los threads
     for (int i = 0; i < num_threads; i++)
     {
-        if (pthread_create(&thread_pool.pool[i], NULL, thread_job_func, &thread_pool) != 0) {
+        if (pthread_create(&(thread_pool->pool[i]), NULL, thread_job_func, thread_pool) != 0) {
             perror("Failed to create the thread");
             exit(1);
         }
     }
 
-    pthread_mutex_unlock(&thread_pool.lock);
-    thread_pool.add_work = add_work;
+    // pthread_mutex_unlock(&thread_pool->lock);
+    thread_pool->add_work = add_work;
 
     return thread_pool;
 }
